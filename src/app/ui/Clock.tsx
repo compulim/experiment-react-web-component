@@ -1,14 +1,14 @@
 import { memo } from 'react';
 import useValue from '../data/useValue';
 
-type ClockProps = { prefix?: string | undefined };
+type ClockProps = { 'prefix-text'?: string | undefined };
 
-const Clock = memo(({ prefix }: ClockProps) => {
+const Clock = memo(({ 'prefix-text': prefixText }: ClockProps) => {
   const [value] = useValue();
 
   return (
     <div>
-      {prefix}
+      {prefixText}
       {value}
     </div>
   );

@@ -30,13 +30,13 @@ export default memo(function App() {
       <div dangerouslySetInnerHTML={html} />
       <h2>Via Portal</h2>
       <ClockPortal />
-      <portal-clock prefix="The time now is: " />
+      <portal-clock prefix-text="The time now is: " />
       <h2>Via Portal (Closed)</h2>
       <ClockPortalClosed />
-      <portal-clock-closed prefix="The time now is: " />
+      <portal-clock-closed prefix-text="The time now is: " />
       <h2>Via Portal (Open)</h2>
       <ClockPortalOpen />
-      <portal-clock-open prefix="The time now is: " />
+      <portal-clock-open prefix-text="The time now is: " />
     </Fragment>
   );
 });
