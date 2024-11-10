@@ -17,6 +17,7 @@
     "start": "npm run build -- --define:IS_DEVELOPMENT=true --servedir=./public --watch"
   },
   "dependencies": {
+    "iter-fest": "^0.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -30,6 +31,7 @@
     "eslint": "^8.57.1",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.37.2",
+    "type-fest": "^4.26.1",
     "typescript": "^5.6.3"
   }
 }
