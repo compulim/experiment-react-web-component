@@ -2,7 +2,10 @@ import { createElement, Fragment, memo, useEffect, useState, type ComponentType 
 import { createPortal } from 'react-dom';
 
 type CustomElementsCompatibleProps = { [name: string]: string | undefined };
-type InstanceMap<P extends CustomElementsCompatibleProps> = Map<string, ReactComponentElement<P>>;
+type InstanceMap<P extends CustomElementsCompatibleProps> = ReadonlyMap<
+  string,
+  Readonly<[HTMLElement | ShadowRoot, Readonly<P>]>
+>;
 
 function signalingState<T>(initialState?: T | undefined) {
   let resolvers = Promise.withResolvers<void>();
@@ -28,51 +31,55 @@ function signalingState<T>(initialState?: T | undefined) {
   };
 }
 
-abstract class ReactComponentElement<P extends CustomElementsCompatibleProps> extends HTMLElement {
-  #key: string = crypto.randomUUID();
-  #propsMap: Map<keyof P, string | undefined> = new Map();
-
-  abstract patchState(state: (state: InstanceMap<P> | undefined) => InstanceMap<P>): void;
-
-  attributeChangedCallback(name: keyof P, _oldValue: string | undefined, newValue: string | undefined) {
-    this.#propsMap.set(name, newValue);
-  }
-
-  connectedCallback() {
-    this.patchState(map => new Map(map).set(this.#key, this));
-  }
-
-  disconnectedCallback() {
-    this.patchState(map => {
-      const nextMap = new Map(map);
-
-      nextMap.delete(this.#key);
-
-      return nextMap;
-    });
-  }
-
-  getProps(): Readonly<P> {
-    return Object.freeze(Object.fromEntries(this.#propsMap.entries()) as P);
-  }
-}
-
 export default function wrapAsWebComponent<N extends string, P extends Record<N, string | undefined>>(
   componentType: ComponentType<P>,
   tagName: string,
-  attributeNames: readonly N[]
+  attributeNames: readonly N[],
+  init?: { shadowMode: 'closed' | 'open' | undefined } | undefined
 ): ComponentType {
   const { getState, next, patchState } = signalingState<InstanceMap<P>>(new Map());
+  const shadowMode = init?.shadowMode;
 
   customElements.define(
     tagName,
-    class extends ReactComponentElement<P> {
+    class ReactElement extends HTMLElement {
       static get observedAttributes(): readonly string[] {
         return attributeNames;
       }
 
-      override patchState(state: (state: InstanceMap<P> | undefined) => InstanceMap<P>): void {
-        patchState(state);
+      #key: string = crypto.randomUUID();
+      #propsMap: Map<keyof P, string | undefined> = new Map();
+
+      attributeChangedCallback(name: keyof P, _oldValue: string | undefined, newValue: string | undefined) {
+        this.#propsMap.set(name, newValue);
+      }
+
+      connectedCallback() {
+        const element =
+          shadowMode === 'closed'
+            ? this.attachShadow({ mode: 'closed' })
+            : shadowMode === 'open'
+              ? this.attachShadow({ mode: 'open' })
+              : this;
+
+        patchState(map =>
+          Object.freeze(
+            new Map(map).set(
+              this.#key,
+              Object.freeze([element, Object.freeze(Object.fromEntries(this.#propsMap.entries()) as P)])
+            )
+          )
+        );
+      }
+
+      disconnectedCallback() {
+        patchState(map => {
+          const nextMap = new Map(map);
+
+          nextMap.delete(this.#key);
+
+          return Object.freeze(nextMap);
+        });
       }
     }
   );
@@ -111,7 +118,7 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
         {Array.from(
           instances
             .entries()
-            .map(([key, element]) => createPortal(createElement(componentType, element.getProps()), element, key))
+            .map(([key, [element, props]]) => createPortal(createElement(componentType, props), element, key))
         )}
       </Fragment>
     );
