@@ -62,9 +62,6 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
   tagName: string,
   attributeNames: readonly N[]
 ): ComponentType {
-  // TODO: Use signaling instead of produce-consumer.
-  //       This could allow the Portal to be relocated.
-  // const { iterator, produce } = produceConsumeState<InstanceMap<P>>(new Map());
   const { getState, next, patchState } = signalingState<InstanceMap<P>>(new Map());
 
   customElements.define(
