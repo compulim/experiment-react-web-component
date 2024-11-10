@@ -35,7 +35,7 @@ function signalingState<T>(initialState?: T | undefined) {
 export default function wrapAsWebComponent<N extends string, P extends Record<N, string | undefined>>(
   componentType: ComponentType<PropsWithDispatchEvent<P>>,
   tagName: string,
-  attributeNames: readonly N[],
+  observedAttributes: readonly N[],
   init?: { shadowMode: 'closed' | 'open' | undefined } | undefined
 ): ComponentType {
   const { getState, next, patchState } = signalingState<InstanceMap<P>>(new Map());
@@ -45,7 +45,7 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
     tagName,
     class ReactElement extends HTMLElement {
       static get observedAttributes(): readonly string[] {
-        return attributeNames;
+        return observedAttributes;
       }
 
       #dispatchEvent = this.dispatchEvent.bind(this);
