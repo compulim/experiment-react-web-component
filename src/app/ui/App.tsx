@@ -31,7 +31,7 @@ export default memo(function App() {
     <Fragment>
       <h1>Hello, World!</h1>
       <h2>React component</h2>
-      <Clock onDispatch={() => {}} />
+      <Clock dispatchEvent={() => {}} />
       <h2>Via ref</h2>
       <div ref={containerRef} />
       <h2>Via dangerouslySetInnerHTML</h2>

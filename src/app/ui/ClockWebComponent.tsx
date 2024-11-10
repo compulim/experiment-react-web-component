@@ -6,7 +6,7 @@ const tagName = 'react-clock';
 
 class ClockElement extends HTMLElement {
   connectedCallback() {
-    render(<Clock />, this);
+    render(<Clock dispatchEvent={() => {}} />, this);
   }
 
   disconnectedCallback() {

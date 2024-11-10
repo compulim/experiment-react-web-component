@@ -2,14 +2,14 @@ import { memo, useMemo } from 'react';
 import useValue from '../data/useValue';
 
 type ClockProps = {
-  onDispatch: (event: Event) => void;
+  dispatchEvent: (event: Event) => void;
   'prefix-text'?: string | undefined;
 };
 
-const Clock = memo(({ onDispatch, 'prefix-text': prefixText }: ClockProps) => {
+const Clock = memo(({ dispatchEvent, 'prefix-text': prefixText }: ClockProps) => {
   const [value] = useValue();
 
-  useMemo(() => onDispatch(new CustomEvent('clock', { bubbles: true, detail: value })), [onDispatch, value]);
+  useMemo(() => dispatchEvent(new CustomEvent('clock', { bubbles: true, detail: value })), [dispatchEvent, value]);
 
   return (
     <div>

@@ -6,7 +6,7 @@ type InstanceMap<P extends CustomElementsCompatibleProps> = ReadonlyMap<
   string,
   Readonly<[HTMLElement | ShadowRoot, Readonly<PropsWithDispatchEvent<P>>]>
 >;
-type PropsWithDispatchEvent<P extends object> = P & { onDispatch: (event: Event) => void };
+type PropsWithDispatchEvent<P extends object> = P & { dispatchEvent: (event: Event) => void };
 
 function signalingState<T>(initialState?: T | undefined) {
   let resolvers = Promise.withResolvers<void>();
@@ -48,8 +48,8 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
         return attributeNames;
       }
 
+      #dispatchEvent = this.dispatchEvent.bind(this);
       #key: string = crypto.randomUUID();
-      #onDispatch = this.dispatchEvent.bind(this);
       #propsMap: Map<keyof P, string | undefined> = new Map();
 
       attributeChangedCallback(name: keyof P, _oldValue: string | undefined, newValue: string | undefined) {
@@ -80,7 +80,7 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
       getProps() {
         return {
           ...Object.freeze(Object.fromEntries(this.#propsMap.entries()) as P),
-          onDispatch: this.#onDispatch
+          dispatchEvent: this.#dispatchEvent
         };
       }
     }
