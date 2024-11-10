@@ -32,18 +32,18 @@ abstract class ReactComponentElement<P extends CustomElementsCompatibleProps> ex
   #key: string = crypto.randomUUID();
   #propsMap: Map<keyof P, string | undefined> = new Map();
 
-  abstract produce(state: (state: InstanceMap<P> | undefined) => InstanceMap<P>): void;
+  abstract patchState(state: (state: InstanceMap<P> | undefined) => InstanceMap<P>): void;
 
   attributeChangedCallback(name: keyof P, _oldValue: string | undefined, newValue: string | undefined) {
     this.#propsMap.set(name, newValue);
   }
 
   connectedCallback() {
-    this.produce(map => new Map(map).set(this.#key, this));
+    this.patchState(map => new Map(map).set(this.#key, this));
   }
 
   disconnectedCallback() {
-    this.produce(map => {
+    this.patchState(map => {
       const nextMap = new Map(map);
 
       nextMap.delete(this.#key);
@@ -71,7 +71,7 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
         return attributeNames;
       }
 
-      override produce(state: (state: InstanceMap<P> | undefined) => InstanceMap<P>): void {
+      override patchState(state: (state: InstanceMap<P> | undefined) => InstanceMap<P>): void {
         patchState(state);
       }
     }
