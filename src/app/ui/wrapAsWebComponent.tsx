@@ -4,8 +4,9 @@ import { createPortal } from 'react-dom';
 type CustomElementsCompatibleProps = { [name: string]: string | undefined };
 type InstanceMap<P extends CustomElementsCompatibleProps> = ReadonlyMap<
   string,
-  Readonly<[HTMLElement | ShadowRoot, Readonly<P>]>
+  Readonly<[HTMLElement | ShadowRoot, Readonly<PropsWithDispatchEvent<P>>]>
 >;
+type PropsWithDispatchEvent<P extends object> = P & { onDispatch: (event: Event) => void };
 
 function signalingState<T>(initialState?: T | undefined) {
   let resolvers = Promise.withResolvers<void>();
@@ -32,7 +33,7 @@ function signalingState<T>(initialState?: T | undefined) {
 }
 
 export default function wrapAsWebComponent<N extends string, P extends Record<N, string | undefined>>(
-  componentType: ComponentType<P>,
+  componentType: ComponentType<PropsWithDispatchEvent<P>>,
   tagName: string,
   attributeNames: readonly N[],
   init?: { shadowMode: 'closed' | 'open' | undefined } | undefined
@@ -48,6 +49,7 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
       }
 
       #key: string = crypto.randomUUID();
+      #onDispatch = this.dispatchEvent.bind(this);
       #propsMap: Map<keyof P, string | undefined> = new Map();
 
       attributeChangedCallback(name: keyof P, _oldValue: string | undefined, newValue: string | undefined) {
@@ -62,14 +64,7 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
               ? this.attachShadow({ mode: 'open' })
               : this;
 
-        patchState(map =>
-          Object.freeze(
-            new Map(map).set(
-              this.#key,
-              Object.freeze([element, Object.freeze(Object.fromEntries(this.#propsMap.entries()) as P)])
-            )
-          )
-        );
+        patchState(map => Object.freeze(new Map(map).set(this.#key, Object.freeze([element, this.getProps()]))));
       }
 
       disconnectedCallback() {
@@ -80,6 +75,13 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
 
           return Object.freeze(nextMap);
         });
+      }
+
+      getProps() {
+        return {
+          ...Object.freeze(Object.fromEntries(this.#propsMap.entries()) as P),
+          onDispatch: this.#onDispatch
+        };
       }
     }
   );
@@ -128,3 +130,5 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
 
   return CustomElementsWrapperPortal;
 }
+
+export { type CustomElementsCompatibleProps, type PropsWithDispatchEvent };
