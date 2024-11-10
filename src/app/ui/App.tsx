@@ -6,6 +6,8 @@ import wrapAsWebComponent from './wrapAsWebComponent';
 defineClockElement;
 
 const ClockPortal = wrapAsWebComponent(Clock, 'portal-clock', ['prefix']);
+const ClockPortalClosed = wrapAsWebComponent(Clock, 'portal-clock-closed', ['prefix'], { shadowMode: 'closed' });
+const ClockPortalOpen = wrapAsWebComponent(Clock, 'portal-clock-open', ['prefix'], { shadowMode: 'open' });
 
 export default memo(function App() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -26,9 +28,15 @@ export default memo(function App() {
       <div ref={containerRef} />
       <h2>Via dangerouslySetInnerHTML</h2>
       <div dangerouslySetInnerHTML={html} />
-      <h2>Via Portal 2</h2>
+      <h2>Via Portal</h2>
       <ClockPortal />
       <portal-clock prefix="The time now is: " />
+      <h2>Via Portal (Closed)</h2>
+      <ClockPortalClosed />
+      <portal-clock-closed prefix="The time now is: " />
+      <h2>Via Portal (Open)</h2>
+      <ClockPortalOpen />
+      <portal-clock-open prefix="The time now is: " />
     </Fragment>
   );
 });
@@ -39,6 +47,8 @@ declare global {
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
     interface IntrinsicElements {
       'portal-clock': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+      'portal-clock-closed': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+      'portal-clock-open': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
     }
   }
 }
