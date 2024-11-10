@@ -43,9 +43,13 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
 
   customElements.define(
     tagName,
-    class ReactElement extends HTMLElement {
+    class extends HTMLElement {
       static get observedAttributes(): readonly string[] {
         return observedAttributes;
+      }
+
+      static override get name(): string {
+        return `${componentType.displayName || 'React'}CustomElement`;
       }
 
       #dispatchEvent = this.dispatchEvent.bind(this);
