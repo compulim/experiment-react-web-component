@@ -5,10 +5,11 @@ import wrapAsWebComponent from './wrapAsWebComponent';
 
 defineClockElement;
 
+const ClockPortal = wrapAsWebComponent(Clock, 'portal-clock', ['prefix']);
+
 export default memo(function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const html = useMemo(() => ({ __html: `<${tagName}></${tagName}>` }), []);
-  const ClockPortal = useMemo(() => wrapAsWebComponent(Clock, 'portal-clock', ['prefix']), []);
 
   useEffect(() => {
     const { current } = containerRef;
