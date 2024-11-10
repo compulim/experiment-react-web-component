@@ -17,7 +17,6 @@
     "start": "npm run build -- --define:IS_DEVELOPMENT=true --servedir=./public --watch"
   },
   "dependencies": {
-    "iter-fest": "^0.2.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

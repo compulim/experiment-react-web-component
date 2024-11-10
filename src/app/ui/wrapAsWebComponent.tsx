@@ -1,24 +1,30 @@
-import { IterableWritableStream } from 'iter-fest';
 import { createElement, Fragment, memo, useEffect, useState, type ComponentType } from 'react';
 import { createPortal } from 'react-dom';
 
 type CustomElementsCompatibleProps = { [name: string]: string | undefined };
 type InstanceMap<P extends CustomElementsCompatibleProps> = Map<string, ReactComponentElement<P>>;
 
-function produceConsumeState<T>(initialState?: T | undefined): {
-  iterator: AsyncIterable<T>;
-  produce: (state: (state: T | undefined) => T) => void;
-} {
-  const writable = new IterableWritableStream<T>();
-  const writer = writable.getWriter();
-
-  let state: T | undefined = initialState;
-
-  typeof state !== 'undefined' && writer.write(state);
+function signalingState<T>(initialState?: T | undefined) {
+  let resolvers = Promise.withResolvers<void>();
+  let state = initialState;
 
   return {
-    iterator: writable,
-    produce: (next: (state: T | undefined) => T) => writer.write((state = next(state)))
+    getState(): T | undefined {
+      return state;
+    },
+
+    async next(): Promise<void> {
+      return resolvers.promise;
+    },
+
+    patchState(next: (state: T | undefined) => T) {
+      state = next(state);
+
+      const resolve = resolvers.resolve.bind(resolvers);
+
+      resolvers = Promise.withResolvers();
+      resolve();
+    }
   };
 }
 
@@ -58,7 +64,8 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
 ): ComponentType {
   // TODO: Use signaling instead of produce-consumer.
   //       This could allow the Portal to be relocated.
-  const { iterator, produce } = produceConsumeState<InstanceMap<P>>(new Map());
+  // const { iterator, produce } = produceConsumeState<InstanceMap<P>>(new Map());
+  const { getState, next, patchState } = signalingState<InstanceMap<P>>(new Map());
 
   customElements.define(
     tagName,
@@ -68,7 +75,7 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
       }
 
       override produce(state: (state: InstanceMap<P> | undefined) => InstanceMap<P>): void {
-        produce(state);
+        patchState(state);
       }
     }
   );
@@ -87,12 +94,12 @@ export default function wrapAsWebComponent<N extends string, P extends Record<N,
       let unmounted = false;
 
       (async () => {
-        for await (const current of iterator) {
-          if (unmounted || !current) {
-            break;
-          }
+        while (!unmounted) {
+          const state = getState();
 
-          setInstances(current);
+          typeof state !== 'undefined' && setInstances(state);
+
+          await next();
         }
       })();
 
